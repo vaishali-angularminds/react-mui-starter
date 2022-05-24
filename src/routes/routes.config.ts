@@ -4,6 +4,8 @@ import { lazy } from "react";
 const Home = lazy(() => import("../pages/home/home"));
 const Login = lazy(() => import("../pages/auth/login/login"));
 const Signup = lazy(() => import("../pages/auth/signup/singup"))
+// const EditProfile = lazy(() => import("../pages/auth/EditUser/edituser"))
+const EditProfile = lazy(() => import("../pages/EditUser/Edituser"))
 const Forgotpassword = lazy(() => import("../pages/auth/Forgotpassword/Forgotpassword"))
 /*
  * Route path: URLs
@@ -12,7 +14,8 @@ export const paths = {
   home: "/home",
   login: "/auth/login",
   signup: "/auth/signup",
-  forgotpassword: "/auth/forgotpassword"
+  forgotpassword: "/auth/forgotpassword",
+  editprofile:'/editprofile'
 };
 
 /*
@@ -34,5 +37,9 @@ export const routes: any[] = [
   {
     path: paths.forgotpassword,
     component: Forgotpassword,
+  },
+  {
+    path: paths.editprofile,
+    component: EditProfile,
   },
 ];

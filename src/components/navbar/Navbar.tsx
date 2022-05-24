@@ -1,4 +1,5 @@
 import React from "react";
+import {paths} from '../../routes/routes.config';
 import "./Navbar.scss";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -17,6 +18,8 @@ import { Button } from '@mui/material';
 import LogoutIcon from "@mui/icons-material/Logout";
 import { TextField } from "@mui/material";
 import { useState } from "react";
+import history from '../../routes/history'
+// import {useNavigate} from 'react-router-dom';
 
 export type NavbarProps = {
   /**
@@ -39,10 +42,13 @@ export const Navbar = ({ onLogout }: NavbarProps) => {
     p: 4,
   };
   const btnstyle = { margin: "20px 0px", width: "85px", };
-
+ 
+  const user = JSON.parse(localStorage.getItem("currentUser")  || '{}') ;
+  // const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [clickSave, setClicksave] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const [err,setErr] = useState({     
     pass:false,
     newPass:false,
@@ -54,7 +60,12 @@ export const Navbar = ({ onLogout }: NavbarProps) => {
     confPass:'',
   })
 
-
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
   const handleClose = () => {
     setOpen(false);
   };
@@ -117,7 +128,8 @@ return err;
           component="div"
           style={{ flex: 1 }}
         >
-          MUI Template
+         <i style={{fontVariant: ['small-caps']}}> AmSocialFeed</i>
+         
         </Typography>
        
         <Avatar
@@ -129,7 +141,8 @@ return err;
           onClick={handleOpen}
           color="inherit"
           src={
-            "http://192.168.0.230:8080/public/images/1652159882796profile4.jpeg"
+            // "http://localhost:3000/src/images/1653374342257profile3.jpeg"
+            `${user.profilePicture}`
           }
         />
       </Toolbar>
@@ -137,7 +150,7 @@ return err;
    
       <Menu
         id="menu-appbar"
-        // anchorEl={anchorEl}
+        anchorEl={anchorEl}
         anchorOrigin={{
           vertical: "top",
           horizontal: "right",
@@ -149,10 +162,12 @@ return err;
         }}
         open={open}
         onClose={handleClose}
+        
       >
          <Tooltip title="Edit profile">
         <MenuItem
-        // onClick={() => navigate('/edit-profile')}
+        // onClick={() => navigate('/editprofile')}
+        onClick={() =>{ history.push(paths.editprofile);window.location.reload();}}
         >
           <EditIcon style={{ marginRight: "10px " }} /> Edit Profile
         </MenuItem>

@@ -1,10 +1,10 @@
 import { BehaviorSubject } from "rxjs";
-import { get, post, put } from "./http/httpMethods";
+import { get, post, put,patch } from "./http/httpMethods";
 import Cookie from "js-cookie";
 import history from "../routes/history";
 import { paths } from "../routes/routes.config";
 import { showErrorToast } from "./toastUtil";
-import { defaultUsers } from "../@types/user";
+
 
 let currentUserFromStorage: any;
 
@@ -56,6 +56,7 @@ export const authenticationService = {
   signup,
   forgotPassword,
   verifyEmail,
+  updateUser,
   currentUser: currentUserSubject.asObservable(),
   get currentUserValue() {
     return currentUserSubject.value;
@@ -92,8 +93,7 @@ function verifyCredentials(payload: any) {
 function register1(payload: any) {
   return post("/auth/register", payload)
   .then((response: any) => {
-    // console.log(response)
-    // handleLogin(response)
+    
     post("/auth/send-verification-email",{},{
       headers : {
         Authorization : `Bearer ${response.token}`
@@ -275,4 +275,12 @@ function forgotPassword(){
   history.push(paths.forgotpassword);
   window.location.reload();
 
+}
+
+function updateUser(payload: any,uId: any){
+  return  patch(`users/${uId}`, payload).then((response: any) => {
+    handleLogin(response);
+    console.log(response);
+    return response;
+  });
 }
