@@ -1,0 +1,68 @@
+.icons{
+    margin-left:20px
+}
+#uploadIcon{
+    align-items: center;
+    margin-left: 30%;
+    margin-top:10%
+}
+.uploadimgbtn{
+    margin-left:30% !important;
+    font-size:14px !important;
+    font-weight:bold !important;
+}
+.dragImg{
+    margin-left: 30% !important;
+    width:'300px'
+}
+.uploadimgModal{
+    position: "absolute";
+    top: "50%";
+    left: "50%";
+    transform: "translate(-50%, -50%)";
+    width: 400;
+    background-color: "background.paper";
+   
+    // boxShadow: 24,
+    p: 4
+}
+#nextbtn{
+    margin-left: 90%;
+    margin-top: -45px;
+    padding : 0;
+    align-items: center;
+    vertical-align:top !important;
+}
+#backarrow{
+    margin-top: -25px;
+    padding : 0;
+    align-items: center;
+    vertical-align:top !important;
+}
+.previewSpan{
+margin-top:-10px !important;
+padding : 0
+}
+// #previewBox{
+//     position: "absolute";
+//     top: "50%";
+//     left: "50%";
+//     transform: "translate(-50%, -50%)";
+//     width: 500;
+//     height: 400;
+//     background-color: "background.paper";
+   
+//     // boxShadow: 24,
+//     p: 4;
+// }
+#mediaImg{
+    margin-top: -30px;
+    // top: "50%";
+    // left: "50%";
+    // height:'400px';
+    // width: '400px'; 
+}
+.postCaption{
+    height:500px;
+    width:600px;
+}

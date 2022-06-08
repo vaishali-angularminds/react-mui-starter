@@ -9,6 +9,8 @@ import RadioGroup from "@mui/material/RadioGroup";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import InputLabel from "@mui/material/InputLabel";
 import Avatar from "@mui/material/Avatar";
+import history from "../../routes/history";
+import { paths } from "../../routes/routes.config";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -31,6 +33,7 @@ const Edituser = () => {
   const [DOB, setDOB] = useState("");
   const [email, setEmail] = useState("");
    const [err, setErr] = useState(err1);
+  
   const [image, setImage] = useState({
     file: [],
     filepreview: '',
@@ -38,10 +41,9 @@ const Edituser = () => {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("currentUser")  || '{}') ;
-    // console.log(user);
+    
     setUserData(user);
-    // console.log(user.profilePicture)
-    setImage({ ...image, filepreview: user.profilePicture });
+    setImage({ ...image, filepreview: `http://localhost:8080/${user.profilePicture}` });
     // setUId(JSON.parse(localStorage.getItem("currentUser"))._id || ' ');
     setEmail(user.email);
     setFName(user.firstname);
@@ -53,20 +55,43 @@ const Edituser = () => {
   }, []);
 
   const handleIMG = (event: any) => {
-    // setFile(event.target.files[0])
+  //  console.log(URL.createObjectURL(event.target.files[0]))
     setImage({
       ...image,
       file: event.target.files[0],
-      filepreview: URL.createObjectURL(event.target.files[0]) || '',
+      filepreview: URL.createObjectURL(event.target.files[0]) ,
     });
+   
+    const formData = new FormData();
+    formData.append('path',event.target.files[0])
+    
+    authenticationService.updateProfilePicture(userData._id,formData)
   };
-// console.log(image.file.name)
+
+   const handleRemoveProfile = () =>{
+   
+    setImage({
+        ...image,
+        file: [],
+        filepreview:  '',
+      })
+    const formData = new FormData();
+    formData.append('path'," ")
+    
+    authenticationService.updateProfilePicture(userData._id,formData)
+
+
+   }
+
+ 
+
+
   const handleSubmit = async() => {
     // isValidmail(email)
    
   
         let data = {
-          "profilePicture":image.file.name,
+         
           "firstname":fname,
           "lastname":lname,
           "email":email,
@@ -88,24 +113,33 @@ const Edituser = () => {
             {/* <></>
           </Grid> */}
           <Avatar
-            // size="large"
-            // aria-label="account of current user"
+            
             aria-controls="menu-appbar"
             aria-haspopup="true"
             // color="inherit"
-            src={image.filepreview && image.filepreview}
+            src={`${image.filepreview && image.filepreview}`}
+            // src={`http://localhost:8080/${userData.profilePicture && userData.profilePicture}`}
+
           />
           <h2>Edit Profile</h2>
           <div style={{display: 'flex'}}>
-          <InputLabel>Add Profile picture</InputLabel>
-          <input
-            type="file"
-            name="Change Profile Picture"
-            onChange={(e) => {
-              handleIMG(e);
-            }}
-          ></input>
-          {/* <InputLabel>Delete Profile</InputLabel> */}
+            <div style={{display: 'block', marginLeft: "20px"}}>
+                <InputLabel>Add Profile</InputLabel>
+                <input
+                  style={{ marginLeft: "40px"}}
+                  type="file"
+                  name="Change Profile Picture"
+                  onChange={(e) => {
+                    handleIMG(e);
+                  }}
+                  ></input>
+          </div>
+          <div style={{display: 'block'}}>
+
+          <InputLabel>Delete Profile</InputLabel>
+          <Button onClick={() =>handleRemoveProfile()}>Delete</Button>
+          </div>
+
         </div>
 
         </Grid>
@@ -208,11 +242,13 @@ const Edituser = () => {
         </Button>
         <Button
           onClick={() => {
-            //   navigate('/feed');
+            
+            history.push(paths.home);
+           window.location.reload();
           }}
           color="error"
           variant="contained"
-          // style={btnstyle1}
+          
         >
           Cancel
         </Button>

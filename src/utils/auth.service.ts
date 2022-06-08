@@ -46,6 +46,7 @@ export const authenticationService = {
   verifyCredentials,
   loadCurrentUser,
   requestPasswordReset,
+  requestForgotPassword,
   setPassword,
   isUserAndTokenAvailable,
   verifyOTP,
@@ -57,6 +58,9 @@ export const authenticationService = {
   forgotPassword,
   verifyEmail,
   updateUser,
+  updateProfilePicture,
+  getAllPosts,
+  newPost,
   currentUser: currentUserSubject.asObservable(),
   get currentUserValue() {
     return currentUserSubject.value;
@@ -114,9 +118,17 @@ function verifyEmail(payload : string)
   console.log('email varify')
   return post(`/auth/verify-email?token=${payload}`)
   .then((response: any) => {
+    console.log(response)
+    if (response.user) {
+      history.push(paths.home);
+      window.location.reload();
+      
+    }
     return response;
   });
 }
+
+
 
 async function register(payload: any) {
   return await post("/auth/register", payload).then((response: any) => {
@@ -157,7 +169,7 @@ async function logout() {
       currentUserSubject.next({});
 
       history.push("/auth/login");
-      // window.location.reload()
+      window.location.reload()
       return response;
     })
     .catch((error) => {
@@ -256,11 +268,12 @@ function handleLogin(response: any) {
   Cookie.set("_token", response.token, { path: "/" });
    console.log(response);
   localStorage.setItem("currentUser", JSON.stringify(response.user));
-
+  localStorage.setItem("token", JSON.stringify(response.token));
+  
   currentUserSubject.next(response.user);
 
   // currentOrganizationSubject.next(response.user._org[0]);
-
+  //  console.log(response.token)
   if (response.user && !response.user._pre) {
     history.push(paths.home);
     window.location.reload();
@@ -279,8 +292,46 @@ function forgotPassword(){
 
 function updateUser(payload: any,uId: any){
   return  patch(`users/${uId}`, payload).then((response: any) => {
-    handleLogin(response);
+    // Cookie.set("_token", response.token, { path: "/" });
+    localStorage.setItem("currentUser", JSON.stringify(response));
+    // currentUserSubject.next(response.user);
+    if (response ) {
+      history.push(paths.home);
+      window.location.reload();
+      
+    }
     console.log(response);
     return response;
   });
+}
+function updateProfilePicture(uId: any,payload: any){
+  // console.log(payload);
+  return  put(`users/${uId}`, payload).then((response: any) => {
+    localStorage.setItem("currentUser", JSON.stringify(response));
+    // history.push(paths.home);
+    // window.location.reload();
+    console.log(response);
+    console.log(payload);
+    return response;
+  });
+}
+
+ function getAllPosts(){
+    get('/post').then((response: any)=>{
+      console.log(response);
+      return response.results
+    })
+
+}
+function newPost(payload:any){
+ return post('/post',payload).then((response :any) =>{
+   console.log(response);
+ })
+
+}
+
+function requestForgotPassword(payload:any){
+  return post('/auth/forgot-password',payload).then((response :any) =>{
+    console.log(response);
+  })
 }
