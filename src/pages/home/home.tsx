@@ -1,7 +1,8 @@
 import "./home.scss";
 import {Container,Typography,Box,Avatar,Divider,TextField,Button,IconButton,Grid,Modal} from "@mui/material";
-import {Card,CardMedia,CardHeader} from "@mui/material";
+import {Card,CardMedia,CardHeader,CardContent} from "@mui/material";
 import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import SimpleImageSlider from "react-simple-image-slider";
 import CloseIcon from "@mui/icons-material/Close";
@@ -10,18 +11,22 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import authAxios from "../../utils/http/api";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { authenticationService } from "../../utils/auth.service";
-import { useEffect, useState } from "react";
-import styled from "styled-components";
+import { useEffect, useState ,useRef} from "react";
+import { createTheme, ThemeProvider } from "@material-ui/core/styles";
 import Picker from "emoji-picker-react";
 import TimeAgo from 'javascript-time-ago';
 import ReactTimeAgo from 'react-time-ago'
 import en from 'javascript-time-ago/locale/en.json';
 import ru from 'javascript-time-ago/locale/ru.json';
 
+import CommentsModal from '../home/CommentsModal'
 const Login = () => {
 
-  TimeAgo.addDefaultLocale(en)
-  TimeAgo.addLocale(ru)
+
+  TimeAgo.setDefaultLocale(en.locale)
+   TimeAgo.addLocale(en)
+
+   const nodeRef = useRef();
 
   const [like, setlike] = useState(false);
   const [allposts, setAllposts] = useState([]);
@@ -30,24 +35,20 @@ const Login = () => {
   const [commentModal,setCommentModal] = useState(false)
   const [index,setIndex] = useState(0)
   const [showPicker, setShowPicker] = useState(false);
+  const [replytocomment,setReplytocomment] =useState('');
+  const [showPickers, setShowPickers] = useState([]);
+  const [currentComment,setCurrentComment] = useState({
+    comment: String,
+commentBy: {},
+likes: [],
+reply: [],
+time: String,
+_id:String
+  })
   const [user,setUser] = useState(JSON.parse(localStorage.getItem("currentUser")  || '{}')  )
   let val = [];
-
-  const ModalWrapper = styled.div`
-  width: 800px;
-  height: 500px;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
-  background: #fff;
-  color: #000;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-`;
-const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-`;
-
+//  let currentComment ={}
+ 
 const getdata = async () => {
   const res = await authAxios.get(`/post`);
   setAllposts(res.data.results);
@@ -56,8 +57,15 @@ const getdata = async () => {
       return `http://localhost:8080/${im.path}`;
     });
   });
+
   setUrls(val);
- 
+  // let arr =new Array()
+  let arr: any[] = []
+  arr.length =  res.data.results.length
+ setShowPickers(arr.fill(false))
+
+ const re = await authAxios.get(`/users/${user._id}`)
+//  setSavedPosts(re.data.bookmark)
 };
 
     useEffect(() => {
@@ -65,9 +73,7 @@ const getdata = async () => {
       getdata();
     }, []);
 
-    // useEffect(() => {
-    // getdata();
-    // },[])
+   
 
   // ************************Comment on Post *************************
 const handlePostComment = async (postid : any) =>{
@@ -77,6 +83,7 @@ const handlePostComment = async (postid : any) =>{
   const res = await authAxios.patch(`/post/${postid}`,data);
   setComment(' ')
 console.log(res)
+getdata();
 }
 
 
@@ -91,20 +98,42 @@ console.log(res)
 console.log(res)
 }
 
-
+// ************************handle emoji select *************************
 const onEmojiClick = (event: any, emojiObject: any) => {
   setComment((prevInput) => prevInput + emojiObject.emoji);
  setShowPicker(false);
+
 };
 
+// ************************ handle bookmark posts *************************
+const handelBookmark =  async (postId : any) =>{
+   const data = { 
+     postId:postId,
+   }
+    const res = await authAxios.put(`/users/bookmark/post`,data);
+   console.log(res);
+   getdata();
+  }
+// ****************************handle like comment*************************
+const handleLikeComment = async (commId : any,postId : any) =>{
+  const data = {
+    commentId : commId
+  }
+  const res = await authAxios.patch(`/post/likecomment/${postId}`,data);
+  console.log(res)
+}
+
+
+// console.log(nodeRef.current);
 
 console.log(allposts)
-
+// console.log(showPickers)
+let temp : any [] = [];
   return (
     <Container maxWidth="sm">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="div" gutterBottom >
-          {allposts.map((post, index) => (
+          {allposts.map((post :any, index) => (
             <Card
               key={post['_id']}
               id="mediaCard"
@@ -112,7 +141,6 @@ console.log(allposts)
               sx={{ marginBottom: "20px" }}
             >
               <CardHeader
-                // style ={{backgroundColor: 'lightGray'}}
                 avatar={
                   <Avatar
                     sx={{ bgcolor: red[500] }}
@@ -121,7 +149,7 @@ console.log(allposts)
                       post['createdBy']['profilePicture'] &&
                       `http://localhost:8080/${post['createdBy']['profilePicture']}`
                     }
-                    // src={''}
+                    
                   ></Avatar>
                 }
                 action={
@@ -155,7 +183,7 @@ console.log(allposts)
               <IconButton >
                 <FavoriteIcon
                   aria-label="add to favorites"
-                  style={{ color: `${post['likes'].some(like => like['userId'] === user['_id']) ? "red" : ""}` }}
+                  style={{ color: `${post['likes'].some((like:any) => like['userId'] === user['_id']) ? "red" : ""}` }}
                   onClick={() => {   
                     setlike(!like)                
                     handleLikePost(post['_id']);
@@ -163,8 +191,20 @@ console.log(allposts)
                   />
                 </IconButton>
                 {/* {console.log(post['likes'].some(like => like['userId'] === user['_id']))} */}
-                <ChatBubbleOutlineIcon className="addToFav" onClick={()=>{setCommentModal(true);setIndex(index)}} />
-                <BookmarkBorderOutlinedIcon className="bookmarkIcon" />
+                <ChatBubbleOutlineIcon className="addToFav" 
+                data-bs-toggle="modal"
+                data-bs-target="#commentsModal"
+                 onClick={()=>{setCommentModal(true);setIndex(index)}} 
+                 />
+                {/* </ChatBubbleOutlineIcon> */}
+               {post['savedBy'].some((save :any )=> save['userId'] === user['_id']) ?
+               (
+                <BookmarkIcon className="bookmarkIcon" onClick={()=>handelBookmark(post['_id'])}></BookmarkIcon>
+               ):(
+                <BookmarkBorderOutlinedIcon className="bookmarkIcon" onClick={()=>handelBookmark(post['_id'])}  />
+
+               )}             
+                
                   </Typography> 
               
 
@@ -175,7 +215,11 @@ console.log(allposts)
               <Typography component='div'>
                
                 {post['comments'].length > 0 ? (
-                  <p id='comment' onClick={()=>{setCommentModal(true);setIndex(index)}}>view all {post['comments']['length']} comments...</p>
+                  <p id='comment' data-bs-toggle="modal"
+                  data-bs-target="#commentsModal"
+                   onClick={()=>{setCommentModal(true);setIndex(index)}} 
+                    // onClick={()=>{setCommentModal(true);setIndex(index)}}
+                    >view all {post['comments']['length']} comments...</p>
                 ) : (
                   <p id='comment'>0 comments</p>
                 )}
@@ -184,24 +228,31 @@ console.log(allposts)
               <Divider />
               <div className='commentMain'>  
              
-                   <span className='emoji'> <img
+                   <span className='emoji'>
+                      <img
                         className="emoji-icon"
                         src="https://icons.getbootstrap.com/assets/icons/emoji-smile.svg"
-                        onClick={() => setShowPicker((val) => !val)}
+                        onClick={() =>{ setShowPicker((val) => !val);
+                          temp=showPickers
+                          temp[index] = !(temp[index])
+                          setShowPickers(temp)                          
+ 
+                        }}
+                        
                         style={{ position: "relative", left: "4%" }}
                       />
-                   {showPicker && (
+                   {showPickers[index] && (
                         <Picker
-                          pickerStyle={{ width: "100%" }}
-                          onEmojiClick={onEmojiClick}
-                        />
+                        // id='emojiPick'
+                        onEmojiClick={onEmojiClick}
+                        pickerStyle={{ position:'initial', width:'300px', height:'300px',left:'270px',top:'300px' }}
+                        />  
                       )}
                       </span>
                     <TextField
                       id="captionInput"
+                      // id={`picker${index} `}
                       key={index}
-                      // style={{ width: "100%" }}
-                      // label={`${`&#128522`}Add Your Comment...`}
                       label={` Add Your Comment...`}
                       variant="standard"
                       value = {comment}
@@ -218,138 +269,19 @@ console.log(allposts)
           ))}
         </Typography>
       </Box>
-{/* ***********************************Comment Modal***************************** */}
 
-      <Modal open={commentModal}
-            onClose={() =>setCommentModal(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-            // style={{ margingLeft:'200px'}}
-            >  
-                {/* {commentModal ? ( */}
-        <>
-        {allposts.map((post,i) =>
-           i===index && 
-           
-         
-          <Box
-            style={{
-              // margin: "auto",
-             
-              justifyContent: "center",
-              // marginTop: "-620px",
-            }}
-          >
-          
-            <Grid container sx={{ marginLeft:'16%',marginTop:'6px'}} >
-              
-                <ModalWrapper commentModal={commentModal}>
-                  {post['img'].length >=2 ?
-               <SimpleImageSlider
-                   width={400}
-                   height={500}
-                   images={urls[i]}
-                   showBullets={true}
-                   showNavs={true}
-                   />
-                 :
-                 <img src={`http://localhost:8080/${post['img'][0]['path']}`} alt="img" style={{ width:"400px",
-                 height:"500px"}} />
-                
-                 }
-                  <ModalContent>
-                    <CloseIcon
-                        style={{position: "relative",  right: "-87%" }}
-                        onClick={() => setCommentModal((prev) => !prev)}
-                      />
-                   <Typography style={{ display: "flex"}}>
-                                  
-                        <Avatar src={ `http://localhost:8080/${user.profilePicture}`}/>
-                         <Typography style={{display: "block",marginTop: "-10px",marginLeft: "10px"}}>
-                               <p >{user.firstname}{ " "} {user.lastname}</p>
-                               <p style={{marginLeft:'5px',marginTop:'-5px',marginBottom:'30px',color:'gray',minWidth:'180px',fontSize:'14px'}}> {post['location']}</p>
-                                <p style={{marginTop: "-15px" }}>{post['caption']}</p>
-                         </Typography>
-
-                    </Typography>
-
-                    <div>
-                    {post['comments'].map((comment : any) =>
-                  comment['comment']?
-                (
-                  <>
-               
-                    <Typography key={comment['_id']} component='div'  style={{marginTop: "15px",display: "flex"}}>
-                        <Typography >
-                              <Avatar src={ `http://localhost:8080/${comment['commentBy']['profilePicture']}`}/>
-                        </Typography>
-                      <Typography component='div' style={{display: "block",maxWidth:'300px'}}>
-                        <Typography style={{display: 'flex' }} >
-                              <p style={{marginLeft:'5px',marginTop:'5px',minWidth:'100px'}}>{comment['commentBy']['firstname']}{''} {comment['commentBy']['lastname']}</p>   
-                              <p style={{marginLeft:'5px',marginTop:'5px',color:'gray',minWidth:'180px'}}> {comment['comment']}</p>
-                              <FavoriteIcon
-                                aria-label="add to favorites"
-                                style={{ color: `${like ? "red" : "gray"}` }}
-                                onClick={() => {
-                                  setlike(!like);
-                                  // handleLike(post._id, post);
-                                }}
-                              />
-                          
-                        </Typography>
-                          <br />
-                        <Typography style={{color:'gray' ,display:'flex',marginTop: "-35px" }}>
-                            <ReactTimeAgo date={comment['time']} locale="en-US" timeStyle="round" style={{minWidth:'100px'}}/>
-                            <TextField
-                                  id="captionInput"
-                                  key={index}
-                                  style={{padding:'0px',marginTop:'-0px',marginLeft:'10px' }}
-                                  size="small"
-                                 
-                                  placeholder="reply"
-                                  variant="standard"
-                                  // value = {comment}
-                                  onChange={(e) => setComment(e.target.value)}
-                                  InputProps={{               
-                                    disableUnderline: true, 
-                                  }}
-                                />
-                        </Typography>
-                        </Typography>
-
-                      </Typography>
-                   
-                  
-                  </>
-                    
-                  
-                    ):(
-                      ''
-                    )
-                    )
-                  // }
-                  }
-                    <br />
-
-                     
-                    </div>
-                    <br />
-                    <br />
-                    <br />
-                   
-                    <br />
-                    <br />
-                    
-                  </ModalContent>
-                </ModalWrapper>
-            </Grid>
-          </Box>
-            )}
-        </>
-      {/* ) : null} */}
-    </Modal>
+<CommentsModal 
+allposts={allposts}
+index={index}
+urls={urls}
+user={user}
+getdata={getdata}
+commentModal={commentModal}
+setCommentModal={setCommentModal}
 
 
+/>
+{/* {console.log(commentModal)} */}
     </Container>
   );
 };

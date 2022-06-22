@@ -20,39 +20,17 @@ import { useState } from "react";
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import {authenticationService} from '../../utils/auth.service'
 import history from '../../routes/history'
-import logo from '../../../public/logo.jpeg'
 import CloseIcon from "@mui/icons-material/Close";
 import Picker from "emoji-picker-react";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import AddAPhotoOutlinedIcon from "@mui/icons-material/AddAPhotoOutlined";
 import SimpleImageSlider from "react-simple-image-slider";
-import styled from "styled-components";
+import EditUserModal from '../../pages/EditUser/EditUserModal'
 import { Avatar,Box,Grid,IconButton,InputAdornment,TextareaAutosize,TextField} from "@mui/material";
-
-import {post} from '../../utils/http/httpMethods'
-const ModalWrapper = styled.div`
-  width: 900px;
-  height: 500px;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
-  background: #fff;
-  color: #000;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-`;
-const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-`;
-
-// import {useNavigate} from 'react-router-dom';
-
+import ChangePassModal from "./ChangePassModal";
 export type NavbarProps = {
-  /**
-   * To be triggered on logout click
-   */
   onLogout?: any;
-  // onLogout =console.log('logout');
+  
 };
 
 export const Navbar = ({ onLogout }: NavbarProps) => {
@@ -69,21 +47,8 @@ export const Navbar = ({ onLogout }: NavbarProps) => {
     p: 4,
   };
 
-  const captionModalstyle = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: 800,
-    height: 360,
-    bgcolor: "background.paper",
-   
-    // boxShadow: 24,
-    p: 4,
-  };
+ 
 
-
-  const btnstyle = { margin: "20px 0px", width: "85px", };
  let img = {
   file:'',
   filepreview: ''
@@ -99,7 +64,8 @@ export const Navbar = ({ onLogout }: NavbarProps) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [files,setFiles] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
-  // const [inputStr, setInputStr] = useState("");
+  const [location,setLocation] = useState('')
+  const [editModal, setEditModal] = useState(false);
   const [image,setImage] = useState([img])
   const [caption,setCaption] = useState('')
   const [urls, setUrls] = useState([]);
@@ -143,7 +109,7 @@ const handleFilePreviewModalClose = () =>{
 }
 
 const handleFilePreviewModalOpen = () =>{
-  setFilePreviewModal(true)
+  setFilePreviewModal((prev: any) => !prev)
 }
 
 
@@ -181,19 +147,19 @@ const handleOpenModal = () => {
   const newPost = () =>{
     let formData = new FormData();
     if(files.length > 1)
-        for (var key of Object.keys(files)) {
+        for (var key  of Object.keys(files)) {
         formData.append('path', files[key])
     }
     else
-    formData.append("path",files[0]);
-
-       formData.append("caption", caption);
+        formData.append("path",files[0]);
+        formData.append('location',location)
+        formData.append("caption", caption);
        authenticationService.newPost(formData);
     
   }
 
 const handleupload = () =>{
-  document.getElementById("uploadImg").click();
+  document.getElementById("uploadImg")?.click();
   
 }
 
@@ -229,7 +195,6 @@ const onEmojiClick = (event: any, emojiObject: any) => {
           )
         }
        
-
       
       let res= arr.map(ar=>{
      
@@ -238,11 +203,15 @@ const onEmojiClick = (event: any, emojiObject: any) => {
        console.log(res)
        setUrls(res)
        handleFilePreviewModalOpen()
-      //  setopenModalNewPostModal(false)
+       setopenModalNewPostModal(false)
   };
 
 // console.log(image)
-
+const handleBack = () =>{
+  console.log('back')
+  handleFilePreviewModalOpen()
+       setopenModalNewPostModal(true)
+}
   return (
     <AppBar position="static" style = {{
       background : 'white',
@@ -266,9 +235,16 @@ const onEmojiClick = (event: any, emojiObject: any) => {
           style={{ display:'flex',color:'black'  ,marginLeft:'35%' }}
         >
          {/* <img src="logo.jpeg" alt='logo' height="20px"></img>Life @ AM */}
-         <HomeIcon className='icons'/>
-          <AddAPhotoOutlinedIcon onClick={handleNewPostmodalOpen} className='icons' />
-          <BookmarkBorderOutlinedIcon  className='icons' />
+         <Tooltip title="Home">
+              <HomeIcon className='icons' onClick={() =>{ history.push(paths.home);window.location.reload();}}/>
+         </Tooltip>
+         <Tooltip title="Create New post">
+              <AddAPhotoOutlinedIcon onClick={handleNewPostmodalOpen} className='icons' />
+          </Tooltip>
+          <Tooltip title="View Bookmark posts">
+              <BookmarkBorderOutlinedIcon  className='icons'
+              onClick={() =>{ history.push(paths.saved);window.location.reload();}}/>
+          </Tooltip>
         
      
         
@@ -310,15 +286,23 @@ const onEmojiClick = (event: any, emojiObject: any) => {
       >
          <Tooltip title="Edit profile">
         <MenuItem
-        // onClick={() => navigate('/editprofile')}
-        onClick={() =>{ history.push(paths.editprofile);window.location.reload();}}
+      
+        // onClick={() =>{ history.push(paths.editprofile);window.location.reload();}}
+        onClick={()=>setEditModal(true)}
         >
-          <EditIcon style={{ marginRight: "10px " }} /> Edit Profile
+          <EditIcon style={{ marginRight: "10px " }}
+          data-bs-toggle="modal"
+          data-bs-target="#changePassModal"
+          onClick={()=>setEditModal(true)}
+          /> Edit Profile
         </MenuItem>
         </Tooltip>
 
         <Tooltip title="change password">
-          <MenuItem onClick={handleOpenModal}>
+          <MenuItem 
+          data-bs-toggle="modal"
+          data-bs-target="#commentsModal"
+          onClick={handleOpenModal}>
             
             <KeyIcon style={{ marginRight: "10px " }} />
             Change Password
@@ -333,58 +317,7 @@ const onEmojiClick = (event: any, emojiObject: any) => {
         </Tooltip>
       </Menu>
 
-{/* *****************************Change Password Modal******************************** */}
-        <Modal
-            open={openModal}
-            onClose={handleCloseModal}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <Box sx={style}>
-              <h3>Reset Your Password</h3>
-            <TextField 
-                  style={{width:'370px',marginTop: "20px"}}
-                  label="old password"   
-                  size="small"    
-                  placeholder="Enter old password"
-                  variant="outlined"
-                  value={password.pass}
-                  onChange={(e) => {setPassword({...password,pass:e.target.value});isValidPass(e.target.value,'pass')}}
-                  error = { clickSave &&  !(err.pass)?true:false}
-                  helperText={ clickSave &&  !(err.pass)? "old password is required" : ''}
-                  required
-                  id='1'
-                />
 
-              <TextField
-                  label="New Password"
-                  style={{ width: '370px' ,marginTop: "20px"}}
-                  variant="outlined"
-                  size="small"    
-                  placeholder="Enter new password"
-                  value={password.newPass}
-                  onChange={(e) => {setPassword({...password,newPass:e.target.value});isValidPass(e.target.value,'newPass')}}
-                  error = { clickSave && !(err.newPass)?true:false}
-                  helperText={ clickSave &&  !(err.newPass)? "new password is required" : ''}
-                  type="password"
-                  id='2'
-                />  
-                <TextField
-                  label="Confirm Password"
-                  style={{ width: '370px' ,marginTop: "20px"}}
-                  variant="outlined"
-                  size="small"    
-                  placeholder="Enter Confirm password"
-                  value={password.confPass}
-                  onChange={(e) => {setPassword({...password,confPass:e.target.value});isValidPass(e.target.value,'confPass')}}
-                  error = { clickSave &&  !(err.confPass)?true:false}
-                  helperText={ clickSave &&  !(err.confPass)? "confirm password is required" : ''}
-                  type="password"
-                  id='3' />
-                  
-                  <Button style={{width: '370px' ,marginTop: "20px"}} variant="contained" color="primary" onClick={() =>setClicksave(true)}>Reset Password</Button>
-            </Box>
-      </Modal>
 
       
       {/* ******************************Add New Post Modal **************************** */}
@@ -451,7 +384,7 @@ const onEmojiClick = (event: any, emojiObject: any) => {
         <Box id='previewBox' sx={style}>
            <span className='previewSpan'>
              <div style={{display: 'inline'}}>
-             <KeyboardBackspaceIcon sx={{color:'gray'}} id='backarrow'/>
+             <KeyboardBackspaceIcon sx={{color:'gray'}} id='backarrow' onClick={()=>handleBack()}/>
             <Button variant="text" id='nextbtn'  onClick={() => {setShowuploadModal(true);setFilePreviewModal(false)}}>Next</Button>
            </div>
            {/* {console.log(image)} */}
@@ -470,6 +403,7 @@ const onEmojiClick = (event: any, emojiObject: any) => {
               ) : (
                 <CardMedia
                   id="mediaImg"
+                  style={{marginTop: '-30px'}}
                   component="img"
                   height="400px"
                   width="400px"
@@ -490,136 +424,162 @@ const onEmojiClick = (event: any, emojiObject: any) => {
          aria-describedby="modal-modal-description">
          
             <Box 
-           style={{
-            margin: "auto",
-            justifyContent: "center",
-            // marginTop: "-620px",
-          }}
+          //  style={{
+          //   margin: "auto",
+          //   // width:'75%'
+          //   // justifyContent: "center",
+          //   marginTop: "-20px",
+          // }}
         >      
           
             <CloseIcon
               style={{color:'white', position: "relative", top: "3%", right: "-90%" }}
               onClick={() => setShowuploadModal(false)}
             />
-            <Grid container  sx={{ marginLeft:'60px',}}>
-              <Grid
-                item
-                xs={9}
-                sx={{ backgroundColor: "white", height: "60px",marginLeft:'200px',marginRight: "200px"}}
-              >
-                <a
-                  style={{
-                    float: "right",
-                    color: "#1890FF",
-                    fontSize: "20px",
-                    margin: "15px",
-                    cursor: "pointer"
-                  }}
-                  onClick = {()=> newPost()}
-                >
-                  upload
-                </a>
-              </Grid>
-              
-                <ModalWrapper showModal={showUploadModal} style={{marginLeft:'200px'}}>
-                  {files.length >1 && files.length >=2 ?
-                 <SimpleImageSlider
-                    height="75%"
-                    width="35%"
-                   images={urls}
-                   showBullets={true}
-                   showNavs={true}
-                   />
-                 :
-                 <CardMedia
-                  // id="mediaImg"
-                  component="img"
-                  height="95%"
-                  width="35%"
-                  image={`${image.length>1 &&  image[1].filepreview } `}
-                />
-                 }
-                  <ModalContent>
-                    <label style={{ display: "flex", padding: "10px 15px" }}>
-                      {" "}
-                      <Avatar  src={          
-                    `http://localhost:8080/${user.profilePicture}`
-          } />
-                      &nbsp;&nbsp;&nbsp;<p>UserName</p>
-                    </label>
-                    <div>
-                    <TextareaAutosize
-                      minRows={13}
-                      value={caption}
-                      onChange={(e) =>{setCaption(e.target.value)}}
-                      style={{
-                        width: "320px",
-                        marginLeft: "15px",
-                        border: "none",
-                      }}
-                      placeholder="Write a caption..."
-                    />
-                    <br />
-                      <img
-                        className="emoji-icon"
-                        src="https://icons.getbootstrap.com/assets/icons/emoji-smile.svg"
-                        onClick={() => setShowPicker((val) => !val)}
-                        style={{ position: "relative", left: "4%" }}
-                      />
-                      {showPicker && (
-                        <Picker
-                          pickerStyle={{ width: "100%" }}
-                          onEmojiClick={onEmojiClick}
+            
+                <Grid
+                      // item
+                      
+                      sx={{display: "flex",
+                      backgroundColor:'white', justifyContent: "right",
+                      // padding:'15px',
+                      margin:'auto',
+                      width:900}}
+                      xs={8}
+                    >
+                      <a
+                        style={{
+                          float: "right",
+                          color: "#1890FF",
+                          fontSize: "20px",
+                          // margin: "15px 2px",
+                          padding: "15px",
+                          cursor: "pointer"
+                        }}
+                        onClick = {()=> newPost()}
+                      >
+                        upload
+                      </a>
+                </Grid>
+                {/* </div> */}
+                <Grid container>
+                  <Box sx={{display: "flex",flexDirection: "row",
+                  backgroundColor:'white', justifyContent: "center",margin:'auto',
+                  width:900 , marginTop:'-4px'}}>
+                    <Grid  xs={7}>
+                      {/* <div  showModal={showUploadModal} > */}
+                        
+                        {/* <div> */}
+                        {files.length >1 && files.length >=2 ?
+                      <SimpleImageSlider
+                          height="75%"
+                          width="30%"
+                        images={urls}
+                        showBullets={true}
+                        showNavs={true}
                         />
-                      )}
-                    </div>
-                    <br />
-                    <br />
-                    <br />
-                    <TextField
-                      variant="standard"
-                      placeholder="Add location"
-                      InputProps={{
-                        disableUnderline: true,
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              edge="end"
-                              style={{ fontSize: "18px", marginRight: "8px" }}
-                            >
-                              <LocationOnOutlinedIcon />
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <br />
-                    <br />
-                    <TextField
-                      variant="standard"
-                      placeholder="Add images"
-                      InputProps={{
-                        disableUnderline: true,
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              edge="end"
-                              style={{ fontSize: "18px", marginRight: "8px" }}
-                            >
-                              <AddAPhotoOutlinedIcon />
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </ModalContent>
-                </ModalWrapper>
-            </Grid>
+                      :
+                      <CardMedia
+                        // id="mediaImg"
+                        component="img"
+                        height="95%"
+                        // width="50%"
+                        image={`${image.length>1 &&  image[1].filepreview } `}
+                      />
+                      }
+                    
+                    </Grid>
+                    <Grid xs={5} style={{width:'190px'}}>
+                     
+                        <label style={{ display: "flex", padding: "10px 15px" }}>
+                          {" "}
+                          <Avatar  src={          
+                        `http://localhost:8080/${user.profilePicture}`
+                          } />
+                          &nbsp;&nbsp;&nbsp;<p>UserName</p>
+                        </label>
+                        
+                        <TextareaAutosize
+                          minRows={13}
+                          value={caption}
+                          onChange={(e) =>{setCaption(e.target.value)}}
+                          style={{
+                            width: "320px",
+                            // border: "1px solid black",
+                            marginLeft: "15px",
+                            border: "none",
+                          }}
+                          placeholder="Write a caption..."
+                        />
+                        <br />
+                          <img
+                            className="emoji-icon"
+                            src="https://icons.getbootstrap.com/assets/icons/emoji-smile.svg"
+                            onClick={() => setShowPicker((val) => !val)}
+                            style={{ position: "relative", left: "4%" }}
+                          />
+                          {showPicker && (
+                            <Picker
+                              pickerStyle={{ width: "100%" }}
+                              onEmojiClick={onEmojiClick}
+                            />
+                          )}
+                        
+                        <br />
+                        <br />
+                        <br />
+                        <TextField
+                          variant="standard"
+                          fullWidth
+                          placeholder="Add location"
+                          onChange={(e) => {setLocation(e.target.value)}}
+                          InputProps={{
+                            disableUnderline: true,
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  edge="end"
+                                  style={{ fontSize: "18px", marginRight: "8px" }}
+                                >
+                                  <LocationOnOutlinedIcon />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                        <br />
+                        <br />
+                        <TextField
+                          variant="standard"
+                          fullWidth
+                          placeholder="Add images"
+                          InputProps={{
+                            disableUnderline: true,
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  edge="end"
+                                  style={{ fontSize: "18px", marginRight: "8px" }}
+                                >
+                                  <AddAPhotoOutlinedIcon />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      
+                    {/* </div> */}
+                    </Grid>
+                  </Box>
+                </Grid>
 
 
 
           </Box>
         </Modal>
+    <EditUserModal 
+   editModal={editModal} setEditModal={setEditModal}  />
+   <ChangePassModal openModal={openModal} setOpenModal={setOpenModal}/>
     
     </AppBar>
   );

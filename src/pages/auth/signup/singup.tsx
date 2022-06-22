@@ -36,12 +36,16 @@ export default function Signup() {
 
   const [openModal, setOpenModal] = useState(false);
   const [emailVerifyToken, setEmailVerifyToken] = useState("");
-  const [data, setData] = useState({
-    firstname: "",
-    lastname: "",
-    email: "",
-    password: "",
-  });
+  const [fname,setFName] = useState("");
+  const [lname,setLName] = useState("");
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  // const [data, setData] = useState({
+  //   firstname: "",
+  //   lastname: "",
+  //   email: "",
+  //   password: "",
+  // });
 
   //   const [isButtonDisabled, setButtonDisabled] = useState(false);
   const { handleSubmit } = useForm();
@@ -58,15 +62,18 @@ export default function Signup() {
     setOpenModal(true);
   };
 
-  const doSignUp = (formData: any) => {
-    // setButtonDisabled(true);
+  const doSignUp = () => {
+    const data ={ 
+      name:`${fname}  ${lname}`,
+      email:email,
+      password:password
+    }
+    console.log(data);
     handleOpenModal();
-    // console.log(data)
+  
     authenticationService
       .register1(data)
-      // .verifyCredentials(formData)
-      // .registerdata);
-      .then((response: any) => {
+       .then((response: any) => {
         // setButtonDisabled(false);
         // console.log(response);
       })
@@ -106,7 +113,7 @@ export default function Signup() {
               name="firstName"
               autoComplete="firstname"
               autoFocus
-              onChange={(e) => setData({ ...data, firstname: e.target.value })}
+              onChange={(e) => setFName(e.target.value )}
             />
             <TextField
               margin="normal"
@@ -119,7 +126,7 @@ export default function Signup() {
               name="lastName"
               autoComplete="lastname"
               autoFocus
-              onChange={(e) => setData({ ...data, lastname: e.target.value })}
+              onChange={(e) =>setLName(e.target.value )}
             />
           </div>
           <TextField
@@ -133,7 +140,7 @@ export default function Signup() {
             name="email"
             autoComplete="email"
             autoFocus
-            onChange={(e) => setData({ ...data, email: e.target.value })}
+            onChange={(e) => setEmail(e.target.value )}
           />
           <TextField
             // margin="normal"
@@ -145,7 +152,7 @@ export default function Signup() {
             type="password"
             id="password"
             autoComplete="current-password"
-            onChange={(e) => setData({ ...data, password: e.target.value })}
+            onChange={(e) => setPassword(e.target.value )}
           />
 
           <LoadingButton
@@ -194,6 +201,8 @@ export default function Signup() {
             color="primary"
             onClick={(e) => {
               authenticationService.verifyEmail(emailVerifyToken);
+              history.push("/auth/login");
+                 window.location.reload()
               handleCloseModal();
             }}
           >

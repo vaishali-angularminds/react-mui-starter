@@ -25,12 +25,25 @@ const Edituser = () => {
   const btnstyle = { margin: "20px 100px", width: "85px" };
 
  
-  const [userData, setUserData] = useState({});
+  const [userData, setUserData] = useState ({
+    bookmark: [],
+createdAt: String,
+deleted: Boolean,
+email: String,
+firstname: String,
+gender: String,
+isEmailVerified: Boolean,
+lastname: String,
+profilePicture: String,
+role: String,
+updatedAt: String,
+_id:String
+  });
   const [fname, setFName] = useState("");
   const [lname, setLName] = useState("");
   const [bio, setBio] = useState("");
   const [gender, setGender] = useState("other");
-  const [DOB, setDOB] = useState("");
+  const [DOB, setDOB] = useState(String || null);
   const [email, setEmail] = useState("");
    const [err, setErr] = useState(err1);
   
@@ -65,7 +78,7 @@ const Edituser = () => {
     const formData = new FormData();
     formData.append('path',event.target.files[0])
     
-    authenticationService.updateProfilePicture(userData._id,formData)
+    authenticationService.updateProfilePicture(userData['_id'],formData)
   };
 
    const handleRemoveProfile = () =>{
@@ -108,10 +121,9 @@ const Edituser = () => {
   return (
     <div>
       <Paper elevation={10} style={paperStyle}>
-        <Grid align="center">
-          {/* <Grid style={{alignItems: 'center'}}> */}
-            {/* <></>
-          </Grid> */}
+        {/* <Grid align="center"> */}
+        <Grid style={{float:"center"}}>
+        
           <Avatar
             
             aria-controls="menu-appbar"

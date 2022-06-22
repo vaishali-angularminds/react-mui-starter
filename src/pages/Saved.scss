@@ -1,0 +1,15 @@
+.wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    grid-auto-rows: minmax(10px, auto);
+    width: 1000px;
+    margin:50px 100px
+
+  }
+  .mediaContainer {
+    
+    padding :10px 100px;
+    // margin:30px 3px;
+    // max-width: 400px;
+  }
